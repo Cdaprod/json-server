@@ -39,7 +39,7 @@
             margin-bottom: 20px;
         }
         input, button, select, textarea {
-            font-size: 16px;
+            font-size: 10px;
             padding: 10px;
             border: none;
             outline: none;
@@ -65,6 +65,11 @@
             text-align: center;
             margin-bottom: 20px;
         }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
         table {
             width: 100%;
             border-collapse: separate;
@@ -72,8 +77,6 @@
             background-color: white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 20px;
         }
         th, td {
             padding: 15px;
@@ -85,6 +88,9 @@
             color: white;
             font-weight: bold;
             text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         tr:last-child td {
             border-bottom: none;
@@ -295,30 +301,32 @@
                         </div>
                         {isLoading && <div className="loading">Loading repository information...</div>}
                         {repoData.length > 0 && (
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Repository</th>
-                                        <th>Private</th>
-                                        <th>Has Dockerfile</th>
-                                        <th>Default Branch</th>
-                                        <th>Last Updated</th>
-                                        <th>Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {repoData.map(repo => (
-                                        <tr key={repo.repoName}>
-                                            <td><a href={repo.url} target="_blank" rel="noopener noreferrer">{repo.repoName}</a></td>
-                                            <td>{repo.isPrivate ? 'Yes' : 'No'}</td>
-                                            <td>{repo.hasDockerfile ? 'Yes' : 'No'}</td>
-                                            <td>{repo.defaultBranch}</td>
-                                            <td>{new Date(repo.lastUpdated).toLocaleDateString()}</td>
-                                            <td>{repo.description}</td>
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Repository</th>
+                                            <th>Private</th>
+                                            <th>Has Dockerfile</th>
+                                            <th>Default Branch</th>
+                                            <th>Last Updated</th>
+                                            <th>Description</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {repoData.map(repo => (
+                                            <tr key={repo.repoName}>
+                                                <td><a href={repo.url} target="_blank" rel="noopener noreferrer">{repo.repoName}</a></td>
+                                                <td>{repo.isPrivate ? 'Yes' : 'No'}</td>
+                                                <td>{repo.hasDockerfile ? 'Yes' : 'No'}</td>
+                                                <td>{repo.defaultBranch}</td>
+                                                <td>{new Date(repo.lastUpdated).toLocaleDateString()}</td>
+                                                <td>{repo.description}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </div>
 
