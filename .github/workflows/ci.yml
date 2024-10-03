@@ -22,3 +22,4 @@ jobs:
         sleep 5
         curl http://localhost:3000 || exit 1
         docker stop test-container
+        docker rm test-container
