@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser-based Mock API with Management UI</title>
+    <title>Specialized Mock API: Buckets, AI Tools, Repo Modules</title>
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -12,6 +12,7 @@
         #root { max-width: 800px; margin: 0 auto; }
         select, textarea, button { margin: 10px 0; padding: 5px; width: 100%; }
         button { background-color: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; }
+        .error { color: red; }
     </style>
 </head>
 <body>
@@ -29,31 +30,54 @@
                 localStorage.setItem(route, JSON.stringify(data));
             },
             getRoutes: () => {
-                return Object.keys(localStorage);
+                return ['buckets', 'ai-tools', 'repo-modules'];
             },
             initializeData: () => {
-                if (localStorage.length === 0) {
-                    MockAPI.setData('users', [
-                        { id: 1, name: "John Doe" },
-                        { id: 2, name: "Jane Doe" }
+                if (!localStorage.getItem('buckets')) {
+                    MockAPI.setData('buckets', [
+                        { id: 1, name: "Data Bucket", description: "For storing raw data" },
+                        { id: 2, name: "Analytics Bucket", description: "For storing analytics results" }
                     ]);
-                    MockAPI.setData('posts', [
-                        { id: 1, title: "First Post", userId: 1 },
-                        { id: 2, title: "Second Post", userId: 2 }
+                }
+                if (!localStorage.getItem('ai-tools')) {
+                    MockAPI.setData('ai-tools', [
+                        { id: 1, name: "Text Classifier", description: "AI tool for text classification" },
+                        { id: 2, name: "Image Recognizer", description: "AI tool for image recognition" }
+                    ]);
+                }
+                if (!localStorage.getItem('repo-modules')) {
+                    MockAPI.setData('repo-modules', [
+                        { 
+                            id: 1, 
+                            repoName: "data-processor", 
+                            image: "data-processor-image",
+                            tag: "v1.0",
+                            url: "https://github.com/example/data-processor",
+                            registry: "docker.io",
+                            pluginName: "Data Processor Plugin"
+                        },
+                        { 
+                            id: 2, 
+                            repoName: "ai-model-trainer", 
+                            image: "ai-trainer-image",
+                            tag: "v2.1",
+                            url: "https://github.com/example/ai-model-trainer",
+                            registry: "gcr.io",
+                            pluginName: "AI Model Trainer Plugin"
+                        }
                     ]);
                 }
             }
         };
 
         function App() {
-            const [routes, setRoutes] = useState([]);
+            const [routes] = useState(MockAPI.getRoutes());
             const [selectedRoute, setSelectedRoute] = useState('');
             const [data, setData] = useState('');
             const [error, setError] = useState(null);
 
             useEffect(() => {
                 MockAPI.initializeData();
-                setRoutes(MockAPI.getRoutes());
             }, []);
 
             useEffect(() => {
@@ -74,25 +98,16 @@
                 }
             };
 
-            const handleAddRoute = () => {
-                const newRoute = prompt("Enter the name for the new route:");
-                if (newRoute) {
-                    MockAPI.setData(newRoute, []);
-                    setRoutes(MockAPI.getRoutes());
-                }
-            };
-
             return (
                 <div>
-                    <h1>Browser-based Mock API Management UI</h1>
-                    {error && <div style={{color: 'red'}}>{error}</div>}
+                    <h1>Specialized Mock API Management UI</h1>
+                    {error && <div className="error">{error}</div>}
                     <select value={selectedRoute} onChange={(e) => setSelectedRoute(e.target.value)}>
-                        <option value="">Select a route</option>
+                        <option value="">Select a category</option>
                         {routes.map(route => (
                             <option key={route} value={route}>{route}</option>
                         ))}
                     </select>
-                    <button onClick={handleAddRoute}>Add New Route</button>
                     {selectedRoute && (
                         <>
                             <textarea

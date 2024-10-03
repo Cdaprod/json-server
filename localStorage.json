@@ -1,5 +1,7 @@
 {
+  "repo-modules" : "[{\"id\":1,\"repoName\":\"data-processor\",\"image\":\"data-processor-image\",\"tag\":\"v1.0\",\"url\":\"https:\/\/github.com\/example\/data-processor\",\"registry\":\"docker.io\",\"pluginName\":\"Data Processor Plugin\"},{\"id\":2,\"repoName\":\"ai-model-trainer\",\"image\":\"ai-trainer-image\",\"tag\":\"v2.1\",\"url\":\"https:\/\/github.com\/example\/ai-model-trainer\",\"registry\":\"gcr.io\",\"pluginName\":\"AI Model Trainer Plugin\"}]",
   "users" : "[{\"id\":1,\"name\":\"John Doe\"},{\"id\":2,\"name\":\"Jane Doe\"}]",
-  "buckets" : "[]",
-  "posts" : "[{\"id\":1,\"title\":\"First Post\",\"userId\":1},{\"id\":2,\"title\":\"Second Post\",\"userId\":2}]"
+  "posts" : "[{\"id\":1,\"title\":\"First Post\",\"userId\":1},{\"id\":2,\"title\":\"Second Post\",\"userId\":2}]",
+  "ai-tools" : "[{\"id\":1,\"name\":\"Text Classifier\",\"description\":\"AI tool for text classification\"},{\"id\":2,\"name\":\"Image Recognizer\",\"description\":\"AI tool for image recognition\"}]",
+  "buckets" : "[]"
 }
