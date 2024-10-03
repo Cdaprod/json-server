@@ -22,15 +22,3 @@ jobs:
         sleep 5
         curl http://localhost:3000 || exit 1
         docker stop test-container
-
-    - name: Extract package-lock.json
-      run: |
-        docker create --name temp modular-registry-checker
-        docker cp temp:/app/package-lock.json ./package-lock.json
-        docker rm temp
-
-    - name: Upload package-lock.json
-      uses: actions/upload-artifact@v2
-      with:
-        name: package-lock
-        path: package-lock.json
