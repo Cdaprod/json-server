@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Services Management Console</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #34495e;
+            min-height: 100vh;
+        }
+        #root {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .service-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .top-bar {
+            background-color: #2980b9;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const services = [
+            { name: 'Cron Job Manager', description: 'Manage scheduled tasks easily.', path: '../cron-server/src/public/cron.html' },
+            { name: 'JSON Server API', description: 'Interact with JSON data via API.', path: '../json-server/src/public/index.html' },
+            { name: 'Storybook UI', description: 'Component library documentation.', path: '/storybook' }
+        ];
+
+        function WebServicesConsole() {
+            const [isAuthenticated, setIsAuthenticated] = useState(true); // Simulated authentication state
+
+            useEffect(() => {
+                if (!isAuthenticated) {
+                    window.location.href = '/login';
+                }
+            }, [isAuthenticated]);
+
+            const handleServiceClick = (servicePath) => {
+                window.location.href = servicePath;
+            };
+
+            return (
+                <div>
+                    <div className="top-bar">Web Services Management Console</div>
+                    <div className="container">
+                        <h2>Manage your applications, services, and more from a single unified dashboard.</h2>
+                        <div className="grid">
+                            {services.map((service) => (
+                                <div className="service-card" key={service.name}>
+                                    <h3>{service.name}</h3>
+                                    <p>{service.description}</p>
+                                    <button onClick={() => handleServiceClick(service.path)}>Manage</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="footer">&copy; 2024 Web Services Management Console. All rights reserved.</div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<WebServicesConsole />, document.getElementById('root'));
+    </script>
+</body>
+</html>
