@@ -1,0 +1,5 @@
+{
+  "users" : "[{\"id\":1,\"name\":\"John Doe\"},{\"id\":2,\"name\":\"Jane Doe\"}]",
+  "buckets" : "[]",
+  "posts" : "[{\"id\":1,\"title\":\"First Post\",\"userId\":1},{\"id\":2,\"title\":\"Second Post\",\"userId\":2}]"
+}

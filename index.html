@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser-based Mock API with Management UI</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        #root { max-width: 800px; margin: 0 auto; }
+        select, textarea, button { margin: 10px 0; padding: 5px; width: 100%; }
+        button { background-color: #4CAF50; color: white; border: none; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock API using localStorage
+        const MockAPI = {
+            getData: (route) => {
+                return JSON.parse(localStorage.getItem(route) || '[]');
+            },
+            setData: (route, data) => {
+                localStorage.setItem(route, JSON.stringify(data));
+            },
+            getRoutes: () => {
+                return Object.keys(localStorage);
+            },
+            initializeData: () => {
+                if (localStorage.length === 0) {
+                    MockAPI.setData('users', [
+                        { id: 1, name: "John Doe" },
+                        { id: 2, name: "Jane Doe" }
+                    ]);
+                    MockAPI.setData('posts', [
+                        { id: 1, title: "First Post", userId: 1 },
+                        { id: 2, title: "Second Post", userId: 2 }
+                    ]);
+                }
+            }
+        };
+
+        function App() {
+            const [routes, setRoutes] = useState([]);
+            const [selectedRoute, setSelectedRoute] = useState('');
+            const [data, setData] = useState('');
+            const [error, setError] = useState(null);
+
+            useEffect(() => {
+                MockAPI.initializeData();
+                setRoutes(MockAPI.getRoutes());
+            }, []);
+
+            useEffect(() => {
+                if (selectedRoute) {
+                    setData(JSON.stringify(MockAPI.getData(selectedRoute), null, 2));
+                }
+            }, [selectedRoute]);
+
+            const handleSave = () => {
+                try {
+                    const parsedData = JSON.parse(data);
+                    MockAPI.setData(selectedRoute, parsedData);
+                    alert('Data saved successfully!');
+                    setError(null);
+                } catch (e) {
+                    console.error("Error saving data:", e);
+                    setError("Failed to save data. Ensure it's valid JSON.");
+                }
+            };
+
+            const handleAddRoute = () => {
+                const newRoute = prompt("Enter the name for the new route:");
+                if (newRoute) {
+                    MockAPI.setData(newRoute, []);
+                    setRoutes(MockAPI.getRoutes());
+                }
+            };
+
+            return (
+                <div>
+                    <h1>Browser-based Mock API Management UI</h1>
+                    {error && <div style={{color: 'red'}}>{error}</div>}
+                    <select value={selectedRoute} onChange={(e) => setSelectedRoute(e.target.value)}>
+                        <option value="">Select a route</option>
+                        {routes.map(route => (
+                            <option key={route} value={route}>{route}</option>
+                        ))}
+                    </select>
+                    <button onClick={handleAddRoute}>Add New Route</button>
+                    {selectedRoute && (
+                        <>
+                            <textarea
+                                rows="20"
+                                value={data}
+                                onChange={(e) => setData(e.target.value)}
+                            />
+                            <button onClick={handleSave}>Save</button>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
