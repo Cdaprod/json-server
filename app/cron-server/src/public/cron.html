@@ -3,68 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cron Job Manager</title>
+    <title>Enhanced Cron Job Manager</title>
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        h1 { color: #333; }
-        form { margin-bottom: 20px; }
-        input, textarea { display: block; margin-bottom: 10px; width: 100%; }
-        button { background-color: #4CAF50; color: white; padding: 10px; border: none; cursor: pointer; }
-        #jobList { border: 1px solid #ddd; padding: 10px; }
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --border-color: #bdc3c7;
+            --error-color: #e74c3c;
+            --success-color: #27ae60;
+        }
+        body, html {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+        #root {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        input, textarea, select, button {
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+        }
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        .error {
+            color: var(--error-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .success {
+            color: var(--success-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .loading {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .action-buttons button {
+            background-color: var(--error-color);
+            margin-left: 10px;
+        }
+        .action-buttons button:hover {
+            background-color: darkred;
+        }
+        @media (max-width: 768px) {
+            .action-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .action-buttons button {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Cron Job Manager</h1>
-    <form id="addJobForm">
-        <input type="text" id="jobName" placeholder="Job Name" required>
-        <input type="text" id="jobSchedule" placeholder="Job Schedule (cron format)" required>
-        <textarea id="jobTask" placeholder="Job Task (JavaScript code)" required></textarea>
-        <button type="submit">Add Job</button>
-    </form>
-    <div id="jobList"></div>
+    <div id="root"></div>
 
-    <script>
-        async function fetchJobs() {
-            const response = await fetch('http://localhost:3001/cron/list');
-            const jobs = await response.json();
-            const jobList = document.getElementById('jobList');
-            jobList.innerHTML = '';
-            for (const [name, job] of Object.entries(jobs)) {
-                const jobDiv = document.createElement('div');
-                jobDiv.innerHTML = `
-                    <h3>${name}</h3>
-                    <p>Schedule: ${job.options.schedule}</p>
-                    <p>Task: ${job.options.task}</p>
-                    <button onclick="removeJob('${name}')">Remove</button>
-                `;
-                jobList.appendChild(jobDiv);
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Detect if backend server is available
+        async function isBackendAvailable() {
+            try {
+                const response = await fetch('/cron/list');
+                return response.ok;
+            } catch {
+                return false;
             }
         }
 
-        async function addJob(event) {
-            event.preventDefault();
-            const name = document.getElementById('jobName').value;
-            const schedule = document.getElementById('jobSchedule').value;
-            const task = document.getElementById('jobTask').value;
-            await fetch('http://localhost:3001/cron/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, schedule, task })
+        // Fallback to local storage if backend is not available
+        const useLocalStorage = (key, initialValue) => {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (error) {
+                    return initialValue;
+                }
             });
-            fetchJobs();
+
+            const setValue = (value) => {
+                try {
+                    setStoredValue(value);
+                    localStorage.setItem(key, JSON.stringify(value));
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+
+            return [storedValue, setValue];
+        };
+
+        function CronJobManager() {
+            const [jobs, setJobs] = useLocalStorage('jobs', []);
+            const [jobName, setJobName] = useState('');
+            const [jobSchedule, setJobSchedule] = useState('0 0 * * *'); // Default to daily at midnight
+            const [jobTask, setJobTask] = useState('');
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [backendAvailable, setBackendAvailable] = useState(false);
+
+            // Detect backend availability on mount
+            useEffect(() => {
+                const checkBackend = async () => {
+                    const available = await isBackendAvailable();
+                    setBackendAvailable(available);
+                    if (available) fetchJobsFromServer();
+                };
+                checkBackend();
+            }, []);
+
+            const fetchJobsFromServer = async () => {
+                setIsLoading(true);
+                try {
+                    const response = await fetch('/cron/list');
+                    if (!response.ok) throw new Error('Failed to fetch jobs.');
+                    const data = await response.json();
+                    const jobArray = Object.entries(data).map(([name, job]) => ({
+                        name,
+                        schedule: job.options.schedule,
+                        task: job.options.task
+                    }));
+                    setJobs(jobArray);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const addJob = async (e) => {
+                e.preventDefault();
+                setError('');
+                setSuccess('');
+                if (!jobName || !jobSchedule || !jobTask) {
+                    setError('All fields are required.');
+                    return;
+                }
+
+                const newJob = { name: jobName, schedule: jobSchedule, task: jobTask };
+                if (backendAvailable) {
+                    try {
+                        const response = await fetch('/cron/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newJob)
+                        });
+                        if (!response.ok) throw new Error('Failed to add job.');
+                        setSuccess('Job added successfully!');
+                        fetchJobsFromServer();
+                    } catch (err) {
+                        setError(err.message);
+                    }
+                } else {
+                    setJobs([...jobs, newJob]);
+                    setSuccess('Job added locally!');
+                }
+                setJobName('');
+                setJobSchedule('0 0 * * *');
+                setJobTask('');
+            };
+
+            const removeJob = async (name) => {
+                setError('');
+                setSuccess('');
+                if (backendAvailable) {
+                    try {
+                        const response = await fetch('/cron/remove', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                        });
+                        if (!response.ok) throw new Error('Failed to remove job.');
+                        setSuccess('Job removed successfully!');
+                        fetchJobsFromServer();
+                    } catch (err) {
+                        setError(err.message);
+                    }
+                } else {
+                    setJobs(jobs.filter((job) => job.name !== name));
+                    setSuccess('Job removed locally!');
+                }
+            };
+
+            const handleCronChange = (e) => {
+                setJobSchedule(e.target.value);
+            };
+
+            return (
+                <div>
+                    <h1>Cron Job Manager</h1>
+
+                    <div className="section">
+                        <h2>Add New Job</h2>
+                        {error && <div className="error">{error}</div>}
+                        {success && <div className="success">{success}</div>}
+                        <form onSubmit={addJob}>
+                            <div className="input-group">
+                                <input
+                                    type="text"
+                                    value={jobName}
+                                    onChange={(e) => setJobName(e.target.value)}
+                                    placeholder="Job Name"
+                                    required
+                                />
+                                <label htmlFor="jobSchedule">Job Schedule (Cron Format):</label>
+                                <input
+                                    type="text"
+                                    value={jobSchedule}
+                                    onChange={handleCronChange}
+                                    placeholder="Cron Expression (e.g., 0 0 * * *)"
+                                    required
+                                />
+                                <textarea
+                                    value={jobTask}
+                                    onChange={(e) => setJobTask(e.target.value)}
+                                    placeholder="Job Task (JavaScript code)"
+                                    required
+                                    rows="4"
+                                ></textarea>
+                                <button type="submit">Add Job</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div className="section">
+                        <h2>Current Jobs</h2>
+                        {isLoading ? (
+                            <div className="loading">Loading jobs...</div>
+                        ) : (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Job Name</th>
+                                            <th>Schedule</th>
+                                            <th>Task</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {jobs.length > 0 ? (
+                                            jobs.map((job) => (
+                                                <tr key={job.name}>
+                                                    <td>{job.name}</td>
+                                                    <td>{job.schedule}</td>
+                                                    <td>
+                                                        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                                            {job.task}
+                                                        </pre>
+                                                    </td>
+                                                    <td className="action-buttons">
+                                                        <button onClick={() => removeJob(job.name)}>Remove</button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="4" style={{ textAlign: 'center' }}>No jobs found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
         }
 
-        async function removeJob(name) {
-            await fetch('http://localhost:3001/cron/remove', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            });
-            fetchJobs();
-        }
-
-        document.getElementById('addJobForm').addEventListener('submit', addJob);
-        fetchJobs();
+        ReactDOM.render(<CronJobManager />, document.getElementById('root'));
     </script>
 </body>
 </html>
