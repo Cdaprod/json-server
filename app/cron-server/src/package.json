@@ -1,0 +1,15 @@
+{
+  "name": "cron-server",
+  "version": "1.0.0",
+  "description": "Cron server for modular registry checker",
+  "main": "src/cronServer.js",
+  "scripts": {
+    "start": "node src/cronServer.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "node-cron": "^3.0.0"
+  }
+}

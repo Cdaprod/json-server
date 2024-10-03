@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cron Job Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        h1 { color: #333; }
+        form { margin-bottom: 20px; }
+        input, textarea { display: block; margin-bottom: 10px; width: 100%; }
+        button { background-color: #4CAF50; color: white; padding: 10px; border: none; cursor: pointer; }
+        #jobList { border: 1px solid #ddd; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Cron Job Manager</h1>
+    <form id="addJobForm">
+        <input type="text" id="jobName" placeholder="Job Name" required>
+        <input type="text" id="jobSchedule" placeholder="Job Schedule (cron format)" required>
+        <textarea id="jobTask" placeholder="Job Task (JavaScript code)" required></textarea>
+        <button type="submit">Add Job</button>
+    </form>
+    <div id="jobList"></div>
+
+    <script>
+        async function fetchJobs() {
+            const response = await fetch('http://localhost:3001/cron/list');
+            const jobs = await response.json();
+            const jobList = document.getElementById('jobList');
+            jobList.innerHTML = '';
+            for (const [name, job] of Object.entries(jobs)) {
+                const jobDiv = document.createElement('div');
+                jobDiv.innerHTML = `
+                    <h3>${name}</h3>
+                    <p>Schedule: ${job.options.schedule}</p>
+                    <p>Task: ${job.options.task}</p>
+                    <button onclick="removeJob('${name}')">Remove</button>
+                `;
+                jobList.appendChild(jobDiv);
+            }
+        }
+
+        async function addJob(event) {
+            event.preventDefault();
+            const name = document.getElementById('jobName').value;
+            const schedule = document.getElementById('jobSchedule').value;
+            const task = document.getElementById('jobTask').value;
+            await fetch('http://localhost:3001/cron/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, schedule, task })
+            });
+            fetchJobs();
+        }
+
+        async function removeJob(name) {
+            await fetch('http://localhost:3001/cron/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            fetchJobs();
+        }
+
+        document.getElementById('addJobForm').addEventListener('submit', addJob);
+        fetchJobs();
+    </script>
+</body>
+</html>

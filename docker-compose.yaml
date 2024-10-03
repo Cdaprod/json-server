@@ -1,0 +1,23 @@
+version: '3'
+services:
+  json-server:
+    build:
+      context: ./app/json-server
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  cron-server:
+    build:
+      context: ./app/cron-server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

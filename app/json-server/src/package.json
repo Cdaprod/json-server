@@ -1,7 +1,7 @@
 {
-  "name": "modular-registry-checker",
+  "name": "json-server",
   "version": "1.0.0",
-  "description": "A modular registry repository checker",
+  "description": "JSON Server for modular registry checker",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js"
