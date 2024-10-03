@@ -39,7 +39,7 @@
             margin-bottom: 20px;
         }
         input, button, select, textarea {
-            font-size: 10px;
+            font-size: 16px;
             padding: 10px;
             border: none;
             outline: none;
@@ -128,6 +128,22 @@
         .auth-status.unauthenticated {
             color: #e74c3c;
         }
+        .route-list {
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .route-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .route-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -135,6 +151,15 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+
+        // Helper function to check if we're running in a Docker environment
+        const isDocker = () => {
+            try {
+                return fetch('/is-docker').then(res => res.json()).then(data => data.isDocker);
+            } catch (error) {
+                return false;
+            }
+        };
 
         async function fetchRepoInfo(username, token) {
             const headers = token ? { 'Authorization': `token ${token}` } : {};
@@ -180,6 +205,8 @@
             const [routes, setRoutes] = useState({});
             const [newRoute, setNewRoute] = useState({ path: '', target: '' });
             const [newData, setNewData] = useState({ resource: '', data: '' });
+            const [hardcodedRoutes, setHardcodedRoutes] = useState({});
+            const [isDockerEnv, setIsDockerEnv] = useState(false);
 
             useEffect(() => {
                 const storedToken = localStorage.getItem('githubToken');
@@ -188,15 +215,26 @@
                     setIsAuthenticated(true);
                 }
                 fetchRoutes();
+                isDocker().then(setIsDockerEnv);
             }, []);
 
             const fetchRoutes = async () => {
                 try {
+                    // Try to fetch routes from the server (Docker environment)
                     const response = await fetch('/config/routes.json');
-                    const data = await response.json();
-                    setRoutes(data);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setHardcodedRoutes(data);
+                    } else {
+                        // If server fetch fails, use local storage
+                        const localRoutes = JSON.parse(localStorage.getItem('routes')) || {};
+                        setRoutes(localRoutes);
+                    }
                 } catch (error) {
                     console.error("Error fetching routes:", error);
+                    // Use local storage as fallback
+                    const localRoutes = JSON.parse(localStorage.getItem('routes')) || {};
+                    setRoutes(localRoutes);
                 }
             };
 
@@ -231,28 +269,38 @@
             const handleAddRoute = async (e) => {
                 e.preventDefault();
                 const updatedRoutes = { ...routes, [newRoute.path]: newRoute.target };
-                try {
-                    await fetch('/api/config/routes', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedRoutes)
-                    });
-                    setRoutes(updatedRoutes);
-                    setNewRoute({ path: '', target: '' });
-                } catch (error) {
-                    setError("Failed to add new route. Please try again.");
+                if (isDockerEnv) {
+                    try {
+                        await fetch('/api/config/routes', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updatedRoutes)
+                        });
+                    } catch (error) {
+                        console.error("Failed to update routes on server:", error);
+                    }
                 }
+                setRoutes(updatedRoutes);
+                localStorage.setItem('routes', JSON.stringify(updatedRoutes));
+                setNewRoute({ path: '', target: '' });
             };
 
             const handleAddData = async (e) => {
                 e.preventDefault();
                 try {
                     const dataObj = JSON.parse(newData.data);
-                    await fetch(`/api/${newData.resource}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(dataObj)
-                    });
+                    if (isDockerEnv) {
+                        await fetch(`/api/${newData.resource}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(dataObj)
+                        });
+                    } else {
+                        // Store in local storage for standalone mode
+                        const existingData = JSON.parse(localStorage.getItem(newData.resource) || '[]');
+                        existingData.push(dataObj);
+                        localStorage.setItem(newData.resource, JSON.stringify(existingData));
+                    }
                     setNewData({ resource: '', data: '' });
                     alert('Data added successfully!');
                 } catch (error) {
@@ -364,6 +412,18 @@
                             <button type="submit">Add Data</button>
                         </form>
                     </div>
+
+                    <div className="section">
+                        <h2>Current Routes</h2>
+                        <div className="route-list">
+                            {Object.entries(isDockerEnv ? hardcodedRoutes : routes).map(([path, target]) => (
+                                <div key={path} className="route-item">
+                                    <span>{path}</span>
+                                    <span>{target}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -372,3 +432,9 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
